@@ -1,0 +1,11 @@
+use_frameworks!
+
+target 'WLM3U_Example' do
+  pod 'WLM3U', :path => '../'
+
+  target 'WLM3U_Tests' do
+    inherit! :search_paths
+
+    
+  end
+end
