@@ -2,8 +2,8 @@
 //  AppDelegate.swift
 //  WLM3U
 //
-//  Created by kumiko1218@163.com on 07/15/2019.
-//  Copyright (c) 2019 kumiko1218@163.com. All rights reserved.
+//  Created by Willie on 07/15/2019.
+//  Copyright (c) 2019 Willie. All rights reserved.
 //
 
 import UIKit
@@ -14,7 +14,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
 
 
-    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
+    func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         return true
     }

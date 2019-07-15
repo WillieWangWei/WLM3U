@@ -1,22 +1,29 @@
 {
   "name": "WLM3U",
   "version": "0.1.0",
-  "summary": "A short description of WLM3U.",
-  "description": "TODO: Add long description of the pod here.",
-  "homepage": "https://github.com/kumiko1218@163.com/WLM3U",
+  "summary": "A m3u video downloader.",
+  "description": "A m3u video downloader using Swift.",
+  "homepage": "https://github.com/WillieWangWei",
   "license": {
     "type": "MIT",
     "file": "LICENSE"
   },
   "authors": {
-    "kumiko1218@163.com": "willie.wangwei@gmail.com"
+    "Willie": "willie.wangwei@gmail.com"
   },
   "source": {
-    "git": "https://github.com/kumiko1218@163.com/WLM3U.git",
+    "git": "https://github.com/WillieWangWei/WLM3U.git",
     "tag": "0.1.0"
   },
   "platforms": {
-    "ios": "8.0"
+    "ios": "9.0"
   },
-  "source_files": "WLM3U/Classes/**/*"
+  "source_files": "WLM3U/Classes/**/*",
+  "dependencies": {
+    "Alamofire": [
+
+    ]
+  },
+  "swift_versions": "5.0",
+  "swift_version": "5.0"
 }

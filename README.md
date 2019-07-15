@@ -1,6 +1,6 @@
 # WLM3U
 
-[![CI Status](https://img.shields.io/travis/kumiko1218@163.com/WLM3U.svg?style=flat)](https://travis-ci.org/kumiko1218@163.com/WLM3U)
+[![CI Status](https://img.shields.io/travis/Willie/WLM3U.svg?style=flat)](https://travis-ci.org/Willie/WLM3U)
 [![Version](https://img.shields.io/cocoapods/v/WLM3U.svg?style=flat)](https://cocoapods.org/pods/WLM3U)
 [![License](https://img.shields.io/cocoapods/l/WLM3U.svg?style=flat)](https://cocoapods.org/pods/WLM3U)
 [![Platform](https://img.shields.io/cocoapods/p/WLM3U.svg?style=flat)](https://cocoapods.org/pods/WLM3U)

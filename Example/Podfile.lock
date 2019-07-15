@@ -1,16 +1,23 @@
 PODS:
-  - WLM3U (0.1.0)
+  - Alamofire (4.8.2)
+  - WLM3U (0.1.0):
+    - Alamofire
 
 DEPENDENCIES:
   - WLM3U (from `../`)
+
+SPEC REPOS:
+  https://github.com/cocoapods/specs.git:
+    - Alamofire
 
 EXTERNAL SOURCES:
   WLM3U:
     :path: "../"
 
 SPEC CHECKSUMS:
-  WLM3U: 9e993c0103b97dee65a1af310c7e34ae89680d9e
+  Alamofire: ae5c501addb7afdbb13687d7f2f722c78734c2d3
+  WLM3U: e5a1fdc1824dd20fabf8bcc8d5dad3e774795d87
 
-PODFILE CHECKSUM: 59fb0c7c03cce9de5e5060e1c3e5a43be5ac382f
+PODFILE CHECKSUM: 0a4afc39f17ea92687f1f170848e186d7b207418
 
 COCOAPODS: 1.7.4
