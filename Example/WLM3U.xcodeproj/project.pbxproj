@@ -29,8 +29,8 @@
 
 /* Begin PBXFileReference section */
 		0D8D2F4854385FFDF6799336 /* Pods_WLM3U_Tests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_WLM3U_Tests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		149379AADAF43519AC1C0545 /* WLM3U.podspec */ = {isa = PBXFileReference; includeInIndex = 1; name = WLM3U.podspec; path = ../WLM3U.podspec; sourceTree = "<group>"; };
-		452401C6CE603EBE6ABD8F4B /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
+		149379AADAF43519AC1C0545 /* WLM3U.podspec */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = WLM3U.podspec; path = ../WLM3U.podspec; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
+		452401C6CE603EBE6ABD8F4B /* LICENSE */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; name = LICENSE; path = ../LICENSE; sourceTree = "<group>"; };
 		486392323BAE872994F8E169 /* Pods-WLM3U_Tests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-WLM3U_Tests.release.xcconfig"; path = "Target Support Files/Pods-WLM3U_Tests/Pods-WLM3U_Tests.release.xcconfig"; sourceTree = "<group>"; };
 		607FACD01AFB9204008FA782 /* WLM3U_Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WLM3U_Example.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		607FACD41AFB9204008FA782 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -44,7 +44,7 @@
 		607FACEB1AFB9204008FA782 /* Tests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tests.swift; sourceTree = "<group>"; };
 		82C6FC23C534D4D29C7E500A /* Pods-WLM3U_Example.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-WLM3U_Example.debug.xcconfig"; path = "Target Support Files/Pods-WLM3U_Example/Pods-WLM3U_Example.debug.xcconfig"; sourceTree = "<group>"; };
 		CAAA42554BF66255B90BB378 /* Pods-WLM3U_Tests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-WLM3U_Tests.debug.xcconfig"; path = "Target Support Files/Pods-WLM3U_Tests/Pods-WLM3U_Tests.debug.xcconfig"; sourceTree = "<group>"; };
-		D40C053E686223E450EB1659 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; name = README.md; path = ../README.md; sourceTree = "<group>"; };
+		D40C053E686223E450EB1659 /* README.md */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = net.daringfireball.markdown; name = README.md; path = ../README.md; sourceTree = "<group>"; };
 		DF8BCE95AE6C01BE7D3BCDFB /* Pods-WLM3U_Example.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-WLM3U_Example.release.xcconfig"; path = "Target Support Files/Pods-WLM3U_Example/Pods-WLM3U_Example.release.xcconfig"; sourceTree = "<group>"; };
 		F6A79C26A65E309CC51BB72B /* Pods_WLM3U_Example.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_WLM3U_Example.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -156,7 +156,6 @@
 				CAAA42554BF66255B90BB378 /* Pods-WLM3U_Tests.debug.xcconfig */,
 				486392323BAE872994F8E169 /* Pods-WLM3U_Tests.release.xcconfig */,
 			);
-			name = Pods;
 			path = Pods;
 			sourceTree = "<group>";
 		};
@@ -227,6 +226,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 				Base,
 			);
@@ -484,7 +484,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "org.cocoapods.demo.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_SWIFT3_OBJC_INFERENCE = Default;
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Debug;
 		};
@@ -499,7 +499,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "org.cocoapods.demo.$(PRODUCT_NAME:rfc1034identifier)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_SWIFT3_OBJC_INFERENCE = Default;
-				SWIFT_VERSION = 4.0;
+				SWIFT_VERSION = 5.0;
 			};
 			name = Release;
 		};

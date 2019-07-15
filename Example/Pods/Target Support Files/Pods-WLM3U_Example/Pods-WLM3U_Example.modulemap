@@ -1,0 +1,6 @@
+framework module Pods_WLM3U_Example {
+  umbrella header "Pods-WLM3U_Example-umbrella.h"
+
+  export *
+  module * { export * }
+}

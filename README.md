@@ -22,7 +22,7 @@ pod 'WLM3U'
 
 ## Author
 
-kumiko1218@163.com, willie.wangwei@gmail.com
+Willie, willie.wangwei@gmail.com
 
 ## License
 

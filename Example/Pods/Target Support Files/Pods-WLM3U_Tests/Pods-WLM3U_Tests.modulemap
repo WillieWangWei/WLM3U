@@ -1,0 +1,6 @@
+framework module Pods_WLM3U_Tests {
+  umbrella header "Pods-WLM3U_Tests-umbrella.h"
+
+  export *
+  module * { export * }
+}

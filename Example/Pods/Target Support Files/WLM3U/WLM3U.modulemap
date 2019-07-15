@@ -1,0 +1,6 @@
+framework module WLM3U {
+  umbrella header "WLM3U-umbrella.h"
+
+  export *
+  module * { export * }
+}

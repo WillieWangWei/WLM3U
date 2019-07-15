@@ -1,0 +1,22 @@
+{
+  "name": "WLM3U",
+  "version": "0.1.0",
+  "summary": "A short description of WLM3U.",
+  "description": "TODO: Add long description of the pod here.",
+  "homepage": "https://github.com/kumiko1218@163.com/WLM3U",
+  "license": {
+    "type": "MIT",
+    "file": "LICENSE"
+  },
+  "authors": {
+    "kumiko1218@163.com": "willie.wangwei@gmail.com"
+  },
+  "source": {
+    "git": "https://github.com/kumiko1218@163.com/WLM3U.git",
+    "tag": "0.1.0"
+  },
+  "platforms": {
+    "ios": "8.0"
+  },
+  "source_files": "WLM3U/Classes/**/*"
+}
