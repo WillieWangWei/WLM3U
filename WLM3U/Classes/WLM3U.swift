@@ -51,6 +51,14 @@ public func cancel(url: URL) {
     Manager.default.cancel(url: url)
 }
 
+/// Get whether a task is in progress using the default `Manager`.
+///
+/// - Parameter url: The url of the task.
+/// - Returns: Whether the task of the specified url is in progress.
+public func isRunning(for url: URL) -> Bool {
+    return Manager.default.isRunning(for: url)
+}
+
 /// A folder to hold all relevant data using the default `Manager`. You can remove all cache associated with this m3u by
 /// deleting this folder.
 ///

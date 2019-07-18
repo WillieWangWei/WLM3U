@@ -51,6 +51,15 @@ public enum WLError: Error {
     case m3uFileContentInvalid
 }
 
+/// A notification that will be sent when the progress of the task changes.
+public let TaskProgressNotification: Notification.Name = Notification.Name(rawValue: "WLTaskProgressNotification")
+
+/// A notification that will be sent when the task ends.
+public let TaskCompletionNotification: Notification.Name = Notification.Name(rawValue: "WLTaskCompletionNotification")
+
+/// A notification that will be sent when a task has an error.
+public let TaskErrorNotification: Notification.Name = Notification.Name(rawValue: "WLTaskErrorNotification")
+
 /// A closure executed once a attach task has completed.
 /// Result<Model>: A Result instance of the attach task. The `Model` value is an object parsed from m3u file.
 public typealias AttachCompletion = (Result<Model>) -> ()
@@ -95,8 +104,19 @@ open class Manager {
     @discardableResult
     public func attach(url: URL, completion: AttachCompletion? = nil) throws -> Workflow {
         
-        if url.isFileURL || !workSpace.isFileURL { throw WLError.parametersInvalid }
-        if workflows.contains(where: { $0.url == url }) { throw WLError.urlDuplicate }
+        if url.isFileURL || !workSpace.isFileURL {
+            NotificationCenter.default.post(name: TaskErrorNotification,
+                                            object: nil,
+                                            userInfo: ["error": WLError.parametersInvalid])
+            throw WLError.parametersInvalid
+        }
+        
+        if workflows.contains(where: { $0.url == url }) {
+            NotificationCenter.default.post(name: TaskErrorNotification,
+                                            object: nil,
+                                            userInfo: ["url": url, "error": WLError.urlDuplicate])
+            throw WLError.urlDuplicate
+        }
         
         let workflow = Workflow(url: url, workSpace: workSpace)
         workflow.delegate = self
@@ -109,19 +129,27 @@ open class Manager {
     ///
     /// - Parameter url: The url of the task you want to cancel.
     public func cancel(url: URL) {
+        if url.isFileURL { return }
         guard let index = workflows.firstIndex(where: { $0.url == url }) else { return }
         workflows[index].cancel()
         workflows.remove(at: index)
     }
 
+    /// Get whether a task is in progress.
+    ///
+    /// - Parameter url: The url of the task.
+    /// - Returns: Whether the task of the specified url is in progress.
+    public func isRunning(for url: URL) -> Bool {
+        if url.isFileURL { return false }
+        return workflows.contains { $0.url == url }
+    }
+    
     /// A folder to hold all relevant data. You can remove all cache associated with this m3u by deleting this folder.
     ///
     /// - Parameter url: The raw URL of the m3u file.
     /// - Returns: Directory url of the folder.
     public func folder(for url: URL) -> URL? {
-        if !url.isFileURL {
-            return nil
-        }
+        if url.isFileURL { return nil }
         let name: String = url.deletingPathExtension().lastPathComponent
         let folder = workSpace.appendingPathComponent(name)
         return folder

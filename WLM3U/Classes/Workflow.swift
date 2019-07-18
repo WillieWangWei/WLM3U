@@ -32,13 +32,11 @@ protocol WorkflowDelegate: AnyObject {
 open class Workflow {
     
     /// Raw url.
-    let url: URL
-    
+    public let url: URL
+    /// A model class for saving data parsed from a m3u file.
+    public var model: Model = Model()
     /// An delegate that is usually the default `Manager`.
     weak var delegate: WorkflowDelegate?
-    
-    /// A model class for saving data parsed from a m3u file.
-    var model: Model = Model()
     
     // Global
     
@@ -121,7 +119,10 @@ extension Workflow {
             let tsDirName: String = model.tsArr?.first?.components(separatedBy: "/").first ?? "ts"
             tsDir = workflowDir!.appendingPathComponent(tsDirName) // ../workSpace/FromSoftware/ts
             
-            handleCompletion(of: completion, result: .success(model))
+            DispatchQueue.main.async {
+                self.handleCompletion(of: completion, result: .success(self.model))
+            }
+            
             return self
         }
         
@@ -277,6 +278,7 @@ extension Workflow {
                 let size = try fileManager!.attributesOfItem(atPath: fileLocalURL.path)[FileAttributeKey.size] as! Int64
                 let progress = Progress(totalUnitCount: size)
                 progress.completedUnitCount = size
+                preCompletedCount += Int(size)
                 self.progressDic[tsStr] = progress
                 
                 if self.waitingFiles.count > 0 {
@@ -353,8 +355,12 @@ extension Workflow {
         }
         
         let completedCount = Int(progress.completedUnitCount) - self.preCompletedCount
+        if completedCount < 0 { return }
         preCompletedCount = Int(progress.completedUnitCount)
         downloadProgress?(progress, completedCount)
+        NotificationCenter.default.post(name: TaskProgressNotification,
+                                        object: self,
+                                        userInfo: ["url": url, "progress": progress, "completedCount": completedCount])
     }
     
     private func allDownloadsDidFinished() {
@@ -400,11 +406,11 @@ extension Workflow {
         dispatchQueue.async {
             
             let fileHandle = FileHandle(forUpdatingAtPath: combineFilePath.path)
+            defer { fileHandle?.closeFile() }
             for tsFilePath in tsFilePaths {
                 let data = try! Data(contentsOf: URL(fileURLWithPath: tsFilePath))
                 fileHandle?.write(data)
             }
-            fileHandle?.closeFile()
             
             do {
                 try self.fileManager!.removeItem(at: self.tsDir!)
@@ -418,6 +424,9 @@ extension Workflow {
             
             DispatchQueue.main.async {
                 self.handleCompletion(of: self.combineCompletion, result: .success(combineFilePath))
+                NotificationCenter.default.post(name: TaskCompletionNotification,
+                                                object: self,
+                                                userInfo: ["url": self.url, "destination": combineFilePath])
             }
         }
     }
@@ -430,9 +439,12 @@ private extension Workflow {
     func handleCompletion<T>(of completion: ((Result<T>) -> ())?, result: Result<T>) {
         
         switch result {
-        case .failure(_):
+        case .failure(let error):
             operationQueue.cancelAllOperations()
             destroyTimer()
+            NotificationCenter.default.post(name: TaskErrorNotification,
+                                            object: nil,
+                                            userInfo: ["url": url, "error": error])
         case .success(_):
             operationQueue.isSuspended = false
         }
