@@ -245,7 +245,6 @@ extension Workflow {
                 guard let url = URL(string: ts) else { continue }
                 getFileSize(url: url) { (size, error) in
                     remain -= 1
-                    print("剩余 \(remain)")
                     if error != nil { return }
                     totalSize += size
                     if remain == 0 {
