@@ -112,7 +112,7 @@ extension Workflow {
                 let data = try Data(contentsOf: cacheURL)
                 model = try JSONDecoder().decode(Model.self, from: data)
             } catch {
-                handleCompletion(of: completion, result: .failure(.handleCacheFailed(error)))
+                handleCompletion(of: "attach", completion: completion, result: .failure(.handleCacheFailed(error)))
                 return self
             }
             
@@ -120,7 +120,7 @@ extension Workflow {
             tsDir = workflowDir!.appendingPathComponent(tsDirName) // ../workSpace/FromSoftware/ts
             
             DispatchQueue.main.async {
-                self.handleCompletion(of: completion, result: .success(self.model))
+                self.handleCompletion(of: "attach", completion: completion, result: .success(self.model))
             }
             
             return self
@@ -144,7 +144,7 @@ extension Workflow {
                                              encoding: .utf8)
             } catch {
                 operationQueue.cancelAllOperations()
-                handleCompletion(of: completion, result: .failure(.handleCacheFailed(error)))
+                handleCompletion(of: "attach", completion: completion, result: .failure(.handleCacheFailed(error)))
                 return self
             }
         }
@@ -152,18 +152,20 @@ extension Workflow {
         // Download m3u file ...
         Alamofire.download(URLRequest(url: url),
                            to: { (_, _) -> (destinationURL: URL, options: DownloadRequest.DownloadOptions) in
-                            return (self.workflowDir!.appendingPathComponent("m3u"), [.removePreviousFile])
+                            return (self.workflowDir!.appendingPathComponent("file.m3u8"), [.removePreviousFile])
         })
             .responseData { (response) in
                 
                 if let error = response.error {
-                    self.handleCompletion(of: completion, result: .failure(.downloadFailed(error)))
+                    self.handleCompletion(of: "attach",
+                                          completion: completion,
+                                          result: .failure(.downloadFailed(error)))
                     return
                 }
                 
                 guard let destinationURL = response.destinationURL else {
                     self.operationQueue.cancelAllOperations()
-                    self.handleCompletion(of: completion, result: .failure(.downloadFailed(nil)))
+                    self.handleCompletion(of: "attach", completion: completion, result: .failure(.downloadFailed(nil)))
                     return
                 }
                 
@@ -176,7 +178,7 @@ extension Workflow {
     private func m3uDownloadDidFinished(at url: URL, completion: AttachCompletion?) {
         
         guard let workflowDir = workflowDir else {
-            handleCompletion(of: completion, result: .failure(.logicError))
+            handleCompletion(of: "attach", completion: completion, result: .failure(.logicError))
             return
         }
         
@@ -189,7 +191,7 @@ extension Workflow {
             }
             try data.write(to: cacheURL)
         } catch {
-            handleCompletion(of: completion, result: .failure(.handleCacheFailed(error)))
+            handleCompletion(of: "attach", completion: completion, result: .failure(.handleCacheFailed(error)))
             return
         }
         
@@ -197,16 +199,15 @@ extension Workflow {
         tsDir = workflowDir.appendingPathComponent(tsDirName) // ../workSpace/FromSoftware/ts
         
         do {
-            try fileManager!.removeItem(at: workflowDir.appendingPathComponent("m3u"))
             try fileManager!.createDirectory(at: tsDir!,
                                              withIntermediateDirectories: true,
                                              attributes: nil)
         } catch {
-            handleCompletion(of: completion, result: .failure(.handleCacheFailed(error)))
+            handleCompletion(of: "attach", completion: completion, result: .failure(.handleCacheFailed(error)))
             return
         }
         
-        handleCompletion(of: completion, result: .success(model))
+        handleCompletion(of: "attach", completion: completion, result: .success(model))
     }
     
     private func parseM3u(file: URL) throws {
@@ -248,7 +249,7 @@ extension Workflow {
         operationQueue.addOperation {
             self.operationQueue.isSuspended = true
             guard let tsArr = self.model.tsArr else {
-                self.handleCompletion(of: completion, result: .failure(.logicError))
+                self.handleCompletion(of: "download", completion: completion, result: .failure(.logicError))
                 return
             }
             self.waitingFiles = tsArr
@@ -261,7 +262,7 @@ extension Workflow {
     private func downloadNextFile() {
         
         guard let uri = model.uri else {
-            handleCompletion(of: downloadCompletion, result: .failure(.logicError))
+            handleCompletion(of: "download", completion: downloadCompletion, result: .failure(.logicError))
             return
         }
         
@@ -290,7 +291,9 @@ extension Workflow {
                 return
                 
             } catch {
-                handleCompletion(of: downloadCompletion, result: .failure(.handleCacheFailed(error)))
+                handleCompletion(of: "download",
+                                 completion: downloadCompletion,
+                                 result: .failure(.handleCacheFailed(error)))
                 return
             }
         }
@@ -345,7 +348,7 @@ extension Workflow {
     @objc private func timerFire() {
         
         guard let totalSize = model.totalSize else {
-            handleCompletion(of: downloadCompletion, result: .failure(.logicError))
+            handleCompletion(of: "download", completion: downloadCompletion, result: .failure(.logicError))
             return
         }
         
@@ -366,7 +369,7 @@ extension Workflow {
     private func allDownloadsDidFinished() {
         timerFire()
         destroyTimer()
-        handleCompletion(of: downloadCompletion, result: .success(self.tsDir!))
+        handleCompletion(of: "download", completion: downloadCompletion, result: .success(self.tsDir!))
     }
 }
 
@@ -395,7 +398,7 @@ extension Workflow {
             let tsArr = model.tsArr,
             let tsDir = tsDir,
             let workflowDir = workflowDir else {
-                handleCompletion(of: combineCompletion, result: .failure(WLError.logicError))
+                handleCompletion(of: "combine", completion: combineCompletion, result: .failure(WLError.logicError))
                 return
         }
         
@@ -418,15 +421,16 @@ extension Workflow {
                 try self.fileManager!.removeItem(at: cacheURL)
             } catch {
                 DispatchQueue.main.async {
-                    self.handleCompletion(of: self.combineCompletion, result: .failure(.handleCacheFailed(error)))
+                    self.handleCompletion(of: "combine",
+                                          completion: self.combineCompletion,
+                                          result: .failure(.handleCacheFailed(error)))
                 }
             }
             
             DispatchQueue.main.async {
-                self.handleCompletion(of: self.combineCompletion, result: .success(combineFilePath))
-                NotificationCenter.default.post(name: TaskCompletionNotification,
-                                                object: self,
-                                                userInfo: ["url": self.url, "destination": combineFilePath])
+                self.handleCompletion(of: "combine",
+                                      completion: self.combineCompletion,
+                                      result: .success(combineFilePath))
             }
         }
     }
@@ -436,7 +440,9 @@ extension Workflow {
 
 private extension Workflow {
     
-    func handleCompletion<T>(of completion: ((Result<T>) -> ())?, result: Result<T>) {
+    func handleCompletion<T>(of task: String, completion: ((Result<T>) -> ())?, result: Result<T>) {
+        
+        completion?(result)
         
         switch result {
         case .failure(let error):
@@ -444,11 +450,13 @@ private extension Workflow {
             destroyTimer()
             NotificationCenter.default.post(name: TaskErrorNotification,
                                             object: nil,
-                                            userInfo: ["url": url, "error": error])
-        case .success(_):
+                                            userInfo: ["task": task, "url": url, "error": error])
+        case .success(let value):
             operationQueue.isSuspended = false
+            NotificationCenter.default.post(name: TaskCompletionNotification,
+                                            object: self,
+                                            userInfo: ["task": task, "url": self.url, "value": value])
         }
-        completion?(result)
         
         if operationQueue.operationCount == 0 {
             delegate?.workflow(didFinish: self)

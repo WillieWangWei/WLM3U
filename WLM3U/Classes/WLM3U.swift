@@ -60,7 +60,7 @@ public func isRunning(for url: URL) -> Bool {
 }
 
 /// A folder to hold all relevant data using the default `Manager`. You can remove all cache associated with this m3u by
-/// deleting this folder.
+/// deleting this folder. Also, if the content is being downloaded, don't forget to cancel the download first.
 ///
 /// - Parameter url: The raw URL of the m3u file.
 /// - Returns: Directory url of the folder.

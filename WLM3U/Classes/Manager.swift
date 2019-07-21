@@ -124,7 +124,7 @@ open class Manager {
         workflow.attach(completion: completion)
         return workflow
     }
-
+    
     /// Cancels the task which url is equal to the specified url.
     ///
     /// - Parameter url: The url of the task you want to cancel.
@@ -134,7 +134,7 @@ open class Manager {
         workflows[index].cancel()
         workflows.remove(at: index)
     }
-
+    
     /// Get whether a task is in progress.
     ///
     /// - Parameter url: The url of the task.
