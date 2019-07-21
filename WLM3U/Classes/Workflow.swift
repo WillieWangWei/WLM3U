@@ -116,8 +116,7 @@ extension Workflow {
                 return self
             }
             
-            let tsDirName: String = model.tsArr?.first?.components(separatedBy: "/").first ?? "ts"
-            tsDir = workflowDir!.appendingPathComponent(tsDirName) // ../workSpace/FromSoftware/ts
+            tsDir = workflowDir!.appendingPathComponent("ts") // ../workSpace/FromSoftware/ts
             
             DispatchQueue.main.async {
                 self.handleCompletion(of: "attach", completion: completion, result: .success(self.model))
@@ -183,51 +182,79 @@ extension Workflow {
         }
         
         do {
-            try parseM3u(file: url)
-            let data = try JSONEncoder().encode(model)
-            let cacheURL = workflowDir.appendingPathComponent("m3uObj") // ../workSpace/FromSoftware/m3uObj
-            if fileManager!.fileExists(atPath: cacheURL.path) {
-                try fileManager!.removeItem(at: cacheURL)
-            }
-            try data.write(to: cacheURL)
+            try parseM3u(file: url, completion: {
+                do {
+                    let data = try JSONEncoder().encode(self.model)
+                    let cacheURL = workflowDir.appendingPathComponent("m3uObj") // ../workSpace/FromSoftware/m3uObj
+                    if self.fileManager!.fileExists(atPath: cacheURL.path) {
+                        try self.fileManager!.removeItem(at: cacheURL)
+                    }
+                    self.tsDir = self.workflowDir!.appendingPathComponent("ts") // ../workSpace/FromSoftware/ts
+                    try data.write(to: cacheURL)
+                    try self.fileManager!.createDirectory(at: self.tsDir!,
+                                                          withIntermediateDirectories: true,
+                                                          attributes: nil)
+                } catch {
+                    self.handleCompletion(of: "attach",
+                                          completion: completion,
+                                          result: .failure(.handleCacheFailed(error)))
+                    return
+                }
+                self.handleCompletion(of: "attach", completion: completion, result: .success(self.model))
+            })
         } catch {
             handleCompletion(of: "attach", completion: completion, result: .failure(.handleCacheFailed(error)))
             return
         }
-        
-        let tsDirName: String = model.tsArr?.first?.components(separatedBy: "/").first ?? "ts"
-        tsDir = workflowDir.appendingPathComponent(tsDirName) // ../workSpace/FromSoftware/ts
-        
-        do {
-            try fileManager!.createDirectory(at: tsDir!,
-                                             withIntermediateDirectories: true,
-                                             attributes: nil)
-        } catch {
-            handleCompletion(of: "attach", completion: completion, result: .failure(.handleCacheFailed(error)))
-            return
-        }
-        
-        handleCompletion(of: "attach", completion: completion, result: .success(model))
     }
     
-    private func parseM3u(file: URL) throws {
+    private func parseM3u(file: URL, completion: @escaping ()->()) throws {
         let m3uStr = try String(contentsOf: file)
         let arr = m3uStr.components(separatedBy: "\n")
         var tsArr = [String]()
         var totalSize: Int = 0
-        for str in arr {
-            if str.hasPrefix("ts/") {
-                tsArr.append(str)
-            } else if str.hasPrefix("#EXTINF:") {
-                if let sizeStr = str.components(separatedBy: "segment_size=").last, let size = Int(sizeStr) {
-                    totalSize += size
+        if m3uStr.contains("http://") || m3uStr.contains("https://") {
+            model.isRelatively = false
+        } else {
+            model.isRelatively = true
+        }
+        if model.isRelatively {
+            for str in arr {
+                if str.hasPrefix("ts/") {
+                    tsArr.append(str)
+                } else if str.hasPrefix("#EXTINF:") {
+                    if let sizeStr = str.components(separatedBy: "segment_size=").last, let size = Int(sizeStr) {
+                        totalSize += size
+                    }
                 }
             }
-        }
-        model.tsArr = tsArr
-        model.totalSize = totalSize
-        if model.tsArr?.count == 0 || model.totalSize == 0 {
-            throw WLError.m3uFileContentInvalid
+            model.tsArr = tsArr
+            model.totalSize = totalSize
+            if model.tsArr?.count == 0 || model.totalSize == 0 {
+                throw WLError.m3uFileContentInvalid
+            }
+            completion()
+        } else {
+            for str in arr {
+                if str.hasPrefix("http") {
+                    tsArr.append(str)
+                }
+            }
+            var remain = tsArr.count
+            for ts in tsArr {
+                guard let url = URL(string: ts) else { continue }
+                getFileSize(url: url) { (size, error) in
+                    remain -= 1
+                    print("剩余 \(remain)")
+                    if error != nil { return }
+                    totalSize += size
+                    if remain == 0 {
+                        self.model.tsArr = tsArr
+                        self.model.totalSize = totalSize
+                        completion()
+                    }
+                }
+            }
         }
     }
 }
@@ -266,10 +293,19 @@ extension Workflow {
             return
         }
         
+        // "https://qwe.com/vcloud/320/v/1559762517_168e53d1cb710bc4fa7e897fe7632c2f/1/asd.ts?vkey=80"
         let tsStr = waitingFiles.removeFirst()
-        let fullURL: URL = uri.appendingPathComponent(tsStr) // http://qq.com/123/hls/ts/200.ts
-        let fileName: String = tsStr.components(separatedBy: "/").last! // 200.ts
-        let fileLocalURL = self.tsDir!.appendingPathComponent(fileName)
+        var fullURL: URL? = nil
+        var fileName: String? = nil
+        if model.isRelatively {
+            fullURL = uri.appendingPathComponent(tsStr) // http://qq.com/123/hls/ts/200.ts
+            fileName = tsStr.components(separatedBy: "/").last! // 200.ts
+        } else {
+            fullURL = URL(string: tsStr)
+            fileName = fullURL?.lastPathComponent
+        }
+        
+        let fileLocalURL = self.tsDir!.appendingPathComponent(fileName!)
         
         // Check if file is exsist.
         
@@ -298,7 +334,7 @@ extension Workflow {
             }
         }
         
-        let req = URLRequest(url: fullURL)
+        let req = URLRequest(url: fullURL!)
         let destination: DownloadRequest.DownloadFileDestination = {(_, _) -> (destinationURL: URL, options: DownloadRequest.DownloadOptions) in
             return (fileLocalURL, [.removePreviousFile])
         }
@@ -347,12 +383,7 @@ extension Workflow {
     
     @objc private func timerFire() {
         
-        guard let totalSize = model.totalSize else {
-            handleCompletion(of: "download", completion: downloadCompletion, result: .failure(.logicError))
-            return
-        }
-        
-        let progress = Progress(totalUnitCount: Int64(totalSize))
+        let progress = Progress(totalUnitCount: Int64(model.totalSize))
         for pro in progressDic.values {
             progress.completedUnitCount += pro.completedUnitCount
         }
@@ -404,13 +435,18 @@ extension Workflow {
         
         let combineFilePath = workflowDir.appendingPathComponent(name).appendingPathExtension("ts")
         fileManager!.createFile(atPath: combineFilePath.path, contents: nil, attributes: nil)
-        let tsFilePaths = tsArr.map { tsDir.path + "/" + $0.components(separatedBy: "/").last! }
+        var tsFilePaths: [String]? = nil
+        if model.isRelatively {
+            tsFilePaths = tsArr.map { tsDir.path + "/" + $0.components(separatedBy: "/").last! }
+        } else {
+            tsFilePaths = tsArr.map { tsDir.path + "/" + URL(string: $0)!.lastPathComponent }
+        }
         
         dispatchQueue.async {
             
             let fileHandle = FileHandle(forUpdatingAtPath: combineFilePath.path)
             defer { fileHandle?.closeFile() }
-            for tsFilePath in tsFilePaths {
+            for tsFilePath in tsFilePaths! {
                 let data = try! Data(contentsOf: URL(fileURLWithPath: tsFilePath))
                 fileHandle?.write(data)
             }
@@ -461,5 +497,24 @@ private extension Workflow {
         if operationQueue.operationCount == 0 {
             delegate?.workflow(didFinish: self)
         }
+    }
+    
+    func getFileSize(url: URL, completion: @escaping (Int, Error?) -> Void) {
+        var request = URLRequest(url: url,
+                                 cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
+                                 timeoutInterval: 2)
+        request.httpMethod = "HEAD"
+        URLSession.shared.dataTask(with: request) { (data, response, error) in
+            if error != nil {
+                completion(0, error)
+            } else {
+                guard
+                    let resp = response as? HTTPURLResponse,
+                    let length = resp.allHeaderFields["Content-Length"] as? String,
+                    let size = Int(length)
+                    else { return }
+                completion(size, nil)
+            }
+            }.resume()
     }
 }

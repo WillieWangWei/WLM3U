@@ -33,7 +33,9 @@ open class Model: Codable {
     /// An array of names of sliced ​​videos parsed from the contents of the file.
     public var tsArr: [String]?
     /// The total size of all sliced ​​videos.
-    public var totalSize: Int?
+    public var totalSize: Int = 0
+    /// Is m3u file's url relatively.
+    public var isRelatively: Bool = false
     /// The m3u file's source path.
     public var uri: URL?
 }
