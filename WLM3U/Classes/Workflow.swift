@@ -68,9 +68,10 @@ open class Workflow {
     
     private var combineCompletion: CombineCompletion?
     
-    init(url: URL, workSpace: URL) {
+    init(url: URL, workSpace: URL, size: Int = 0) {
         self.url = url
         self.workSpace = workSpace
+        model.totalSize = size
     }
     
     /// Cancels all tasks holding by the `Workflow`.
@@ -182,43 +183,35 @@ extension Workflow {
         }
         
         do {
-            try parseM3u(file: url, completion: {
-                do {
-                    let data = try JSONEncoder().encode(self.model)
-                    let cacheURL = workflowDir.appendingPathComponent("m3uObj") // ../workSpace/FromSoftware/m3uObj
-                    if self.fileManager!.fileExists(atPath: cacheURL.path) {
-                        try self.fileManager!.removeItem(at: cacheURL)
-                    }
-                    self.tsDir = self.workflowDir!.appendingPathComponent("ts") // ../workSpace/FromSoftware/ts
-                    try data.write(to: cacheURL)
-                    try self.fileManager!.createDirectory(at: self.tsDir!,
-                                                          withIntermediateDirectories: true,
-                                                          attributes: nil)
-                } catch {
-                    self.handleCompletion(of: "attach",
-                                          completion: completion,
-                                          result: .failure(.handleCacheFailed(error)))
-                    return
-                }
-                self.handleCompletion(of: "attach", completion: completion, result: .success(self.model))
-            })
+            try parseM3u(file: url)
+            let data = try JSONEncoder().encode(model)
+            let cacheURL = workflowDir.appendingPathComponent("m3uObj") // ../workSpace/FromSoftware/m3uObj
+            if fileManager!.fileExists(atPath: cacheURL.path) {
+                try fileManager!.removeItem(at: cacheURL)
+            }
+            tsDir = workflowDir.appendingPathComponent("ts") // ../workSpace/FromSoftware/ts
+            try data.write(to: cacheURL)
+            try fileManager!.createDirectory(at: tsDir!,
+                                             withIntermediateDirectories: true,
+                                             attributes: nil)
+            handleCompletion(of: "attach", completion: completion, result: .success(model))
         } catch {
             handleCompletion(of: "attach", completion: completion, result: .failure(.handleCacheFailed(error)))
             return
         }
     }
     
-    private func parseM3u(file: URL, completion: @escaping ()->()) throws {
+    private func parseM3u(file: URL) throws {
         let m3uStr = try String(contentsOf: file)
         let arr = m3uStr.components(separatedBy: "\n")
         var tsArr = [String]()
-        var totalSize: Int = 0
         if m3uStr.contains("http://") || m3uStr.contains("https://") {
             model.isRelatively = false
         } else {
             model.isRelatively = true
         }
         if model.isRelatively {
+            var totalSize: Int = 0
             for str in arr {
                 if str.hasPrefix("ts/") {
                     tsArr.append(str)
@@ -229,32 +222,75 @@ extension Workflow {
                 }
             }
             model.tsArr = tsArr
-            model.totalSize = totalSize
+            model.totalSize = max(model.totalSize ?? 0, totalSize)
             if model.tsArr?.count == 0 || model.totalSize == 0 {
                 throw WLError.m3uFileContentInvalid
             }
-            completion()
         } else {
             for str in arr {
                 if str.hasPrefix("http") {
                     tsArr.append(str)
                 }
             }
-            var remain = tsArr.count
-            for ts in tsArr {
-                guard let url = URL(string: ts) else { continue }
-                getFileSize(url: url) { (size, error) in
-                    remain -= 1
-                    if error != nil { return }
-                    totalSize += size
-                    if remain == 0 {
-                        self.model.tsArr = tsArr
-                        self.model.totalSize = totalSize
-                        completion()
+            model.tsArr = tsArr
+            if model.tsArr?.count == 0 {
+                throw WLError.m3uFileContentInvalid
+            }
+            if model.totalSize == 0 {
+                calculateSize(with: model.tsArr!)
+            }
+        }
+    }
+    
+    private func calculateSize(with tsArr: [String]) {
+        var remain = tsArr.count
+        var totalSize: Int = 0
+        for ts in tsArr {
+            guard let url = URL(string: ts) else { continue }
+            getFileSize(url: url) { (size, error) in
+                remain -= 1
+                let progress = Progress(totalUnitCount: Int64(tsArr.count))
+                progress.completedUnitCount = Int64(tsArr.count - remain)
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(name: TaskGetFileSizeProgressNotification,
+                                                    object: self,
+                                                    userInfo: ["task": "attach",
+                                                               "url": self.url,
+                                                               "value": progress])
+                }
+                totalSize += size
+                if remain == 0 {
+                    self.model.totalSize = totalSize
+                    DispatchQueue.main.async {
+                        NotificationCenter.default.post(name: TaskGetFileSizeCompletionNotification,
+                                                        object: self,
+                                                        userInfo: ["task": "attach",
+                                                                   "url": self.url,
+                                                                   "value": totalSize])
                     }
                 }
             }
         }
+    }
+    
+    private func getFileSize(url: URL, completion: @escaping (Int, Error?) -> Void) {
+        var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData)
+        request.httpMethod = "HEAD"
+        URLSession.shared.dataTask(with: request) { (data, response, error) in
+            if error != nil {
+                completion(0, error)
+            } else {
+                guard
+                    let resp = response as? HTTPURLResponse,
+                    let length = resp.allHeaderFields["Content-Length"] as? String,
+                    let size = Int(length)
+                    else {
+                        completion(0, nil)
+                        return
+                }
+                completion(size, nil)
+            }
+            }.resume()
     }
 }
 
@@ -304,7 +340,7 @@ extension Workflow {
             fileName = fullURL?.lastPathComponent
         }
         
-        let fileLocalURL = self.tsDir!.appendingPathComponent(fileName!)
+        let fileLocalURL = tsDir!.appendingPathComponent(fileName!)
         
         // Check if file is exsist.
         
@@ -315,12 +351,12 @@ extension Workflow {
                 let progress = Progress(totalUnitCount: size)
                 progress.completedUnitCount = size
                 preCompletedCount += Int(size)
-                self.progressDic[tsStr] = progress
+                progressDic[tsStr] = progress
                 
                 if self.waitingFiles.count > 0 {
-                    self.downloadNextFile()
+                    downloadNextFile()
                 } else {
-                    self.allDownloadsDidFinished()
+                    allDownloadsDidFinished()
                 }
                 
                 return
@@ -382,12 +418,13 @@ extension Workflow {
     
     @objc private func timerFire() {
         
-        let progress = Progress(totalUnitCount: Int64(model.totalSize))
+        guard let totalSize = model.totalSize, totalSize > 0 else { return }
+        let progress = Progress(totalUnitCount: Int64(totalSize))
         for pro in progressDic.values {
             progress.completedUnitCount += pro.completedUnitCount
         }
         
-        let completedCount = Int(progress.completedUnitCount) - self.preCompletedCount
+        let completedCount = Int(progress.completedUnitCount) - preCompletedCount
         if completedCount < 0 { return }
         preCompletedCount = Int(progress.completedUnitCount)
         downloadProgress?(progress, completedCount)
@@ -399,7 +436,7 @@ extension Workflow {
     private func allDownloadsDidFinished() {
         timerFire()
         destroyTimer()
-        handleCompletion(of: "download", completion: downloadCompletion, result: .success(self.tsDir!))
+        handleCompletion(of: "download", completion: downloadCompletion, result: .success(tsDir!))
     }
 }
 
@@ -496,24 +533,5 @@ private extension Workflow {
         if operationQueue.operationCount == 0 {
             delegate?.workflow(didFinish: self)
         }
-    }
-    
-    func getFileSize(url: URL, completion: @escaping (Int, Error?) -> Void) {
-        var request = URLRequest(url: url,
-                                 cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
-                                 timeoutInterval: 2)
-        request.httpMethod = "HEAD"
-        URLSession.shared.dataTask(with: request) { (data, response, error) in
-            if error != nil {
-                completion(0, error)
-            } else {
-                guard
-                    let resp = response as? HTTPURLResponse,
-                    let length = resp.allHeaderFields["Content-Length"] as? String,
-                    let size = Int(length)
-                    else { return }
-                completion(size, nil)
-            }
-            }.resume()
     }
 }

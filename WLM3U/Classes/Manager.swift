@@ -54,6 +54,12 @@ public enum WLError: Error {
 /// A notification that will be sent when the progress of the task changes.
 public let TaskProgressNotification: Notification.Name = Notification.Name(rawValue: "WLTaskProgressNotification")
 
+/// A notification that will be sent when the progress of getting file size changes.
+public let TaskGetFileSizeProgressNotification: Notification.Name = Notification.Name(rawValue: "WLTaskGetFileSizeProgressNotification")
+
+/// A notification that will be sent when size of all files has got.
+public let TaskGetFileSizeCompletionNotification: Notification.Name = Notification.Name(rawValue: "WLTaskGetFileSizeCompletionNotification")
+
 /// A notification that will be sent when the task ends.
 public let TaskCompletionNotification: Notification.Name = Notification.Name(rawValue: "WLTaskCompletionNotification")
 
@@ -95,34 +101,37 @@ open class Manager {
     
     private var workflows = [Workflow]()
     
-    /// Creates a `Workflow` to retrieve the contents of the specified `url` and `completion`.
+    /// Creates a `Workflow` to retrieve the contents of the specified `url`, `size`, `calculateSize` and `completion`.
     ///
     /// - Parameters:
-    ///   - url:        A URL of m3u file.
-    ///   - completion: The attach task completion callback.
+    ///   - url:           A URL of m3u file.
+    ///   - size:          The total size of the downloaded file, the default is `0`.
+    ///   - calculateSize: Whether try to parse the total size of the file from the m3u file, the default is `false`.
+    ///   - completion:    The attach task completion callback.
     /// - Returns: A `Workflow` instance.
     @discardableResult
-    public func attach(url: URL, completion: AttachCompletion? = nil) throws -> Workflow {
-        
-        if url.isFileURL || !workSpace.isFileURL {
-            NotificationCenter.default.post(name: TaskErrorNotification,
-                                            object: nil,
-                                            userInfo: ["error": WLError.parametersInvalid])
-            throw WLError.parametersInvalid
-        }
-        
-        if workflows.contains(where: { $0.url == url }) {
-            NotificationCenter.default.post(name: TaskErrorNotification,
-                                            object: nil,
-                                            userInfo: ["url": url, "error": WLError.urlDuplicate])
-            throw WLError.urlDuplicate
-        }
-        
-        let workflow = Workflow(url: url, workSpace: workSpace)
-        workflow.delegate = self
-        workflows.append(workflow)
-        workflow.attach(completion: completion)
-        return workflow
+    public func attach(url: URL, size: Int = 0, calculateSize: Bool = false, completion: AttachCompletion? = nil)
+        throws -> Workflow {
+            
+            if url.isFileURL || !workSpace.isFileURL {
+                NotificationCenter.default.post(name: TaskErrorNotification,
+                                                object: nil,
+                                                userInfo: ["error": WLError.parametersInvalid])
+                throw WLError.parametersInvalid
+            }
+            
+            if workflows.contains(where: { $0.url == url }) {
+                NotificationCenter.default.post(name: TaskErrorNotification,
+                                                object: nil,
+                                                userInfo: ["url": url, "error": WLError.urlDuplicate])
+                throw WLError.urlDuplicate
+            }
+            
+            let workflow = Workflow(url: url, workSpace: workSpace, size: size)
+            workflow.delegate = self
+            workflows.append(workflow)
+            workflow.attach(completion: completion)
+            return workflow
     }
     
     /// Cancels the task which url is equal to the specified url.

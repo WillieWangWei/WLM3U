@@ -36,12 +36,15 @@ public var workSpace: URL {
 /// Creates a `Workflow` using the default `Manager` to retrieve the contents of the specified `url` and `completion`.
 ///
 /// - Parameters:
-///   - url:        A URL of m3u file.
-///   - completion: The attach task completion callback.
+///   - url:           A URL of m3u file.
+///   - size:          The total size of the downloaded file, the default is `0`.
+///   - calculateSize: Whether try to parse the total size of the file from the m3u file, the default is `false`.
+///   - completion:    The attach task completion callback.
 /// - Returns: A `Workflow` instance.
 @discardableResult
-public func attach(url: URL, completion: AttachCompletion? = nil) throws -> Workflow {
-    return try Manager.default.attach(url: url, completion: completion)
+public func attach(url: URL, size: Int = 0, calculateSize: Bool = false, completion: AttachCompletion? = nil)
+    throws -> Workflow {
+        return try Manager.default.attach(url: url, size: size, calculateSize: calculateSize, completion: completion)
 }
 
 /// Cancels the task which url is equal to the specified url using the default `Manager`.
