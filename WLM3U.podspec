@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'WLM3U'
-  s.version          = '0.1.1'
+  s.version          = '0.1.2'
   s.summary          = 'A m3u video downloader.'
 
 # This description is used to generate tags and improve search results.
