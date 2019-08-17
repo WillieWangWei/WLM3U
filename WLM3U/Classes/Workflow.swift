@@ -436,6 +436,23 @@ extension Workflow {
     private func allDownloadsDidFinished() {
         timerFire()
         destroyTimer()
+        
+        let fileLocalUrl = workflowDir!.appendingPathComponent("file.m3u8")
+        var m3uStr = try! String(contentsOf: fileLocalUrl)
+        let arr = m3uStr.components(separatedBy: "\n")
+        var lineArr = [String]()
+        for str in arr {
+            if str.hasPrefix("http") {
+                let fileName = URL(string: str)!.lastPathComponent
+                lineArr.append("ts/\(fileName)")
+            } else {
+                lineArr.append(str)
+            }
+        }
+        m3uStr = lineArr.joined(separator: "\n")
+        try! fileManager!.removeItem(at: fileLocalUrl)
+        try! m3uStr.write(to: fileLocalUrl, atomically: true, encoding: .utf8)
+        
         handleCompletion(of: "download", completion: downloadCompletion, result: .success(tsDir!))
     }
 }
