@@ -51,6 +51,25 @@ public enum WLError: Error {
     case m3uFileContentInvalid
 }
 
+extension WLError: LocalizedError {
+    public var errorDescription: String? {
+        switch self {
+        case .parametersInvalid:
+            return "参数错误，请检查传入的参数。"
+        case .urlDuplicate:
+            return "URL 已存在，当前正在处理中。"
+        case .handleCacheFailed(_):
+            return "操作缓存失败，请检查本地缓存是否正确。"
+        case .logicError:
+            return "逻辑错误"
+        case .m3uFileContentInvalid:
+            return "m3u 文件内容错误，请检查文件内容格式和数据是否正确。"
+        default:
+            return "未知错误"
+        }
+    }
+}
+
 /// A notification that will be sent when the progress of the task changes.
 public let TaskProgressNotification: Notification.Name = Notification.Name(rawValue: "WLTaskProgressNotification")
 
