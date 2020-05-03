@@ -36,15 +36,22 @@ let url = URL(string:"http://xxx.com/yyy.m3u8")! // URL of the M3U file
 let size: Int = <#fileSize#>                     // The total size of all ts files
 
 WLM3U
-    .attach(url: url, size: size, completion: { (result) in
-        switch result {
-        case .success(let model):
-            model.name  // yyy
-            model.tsArr // ts file array
-            ...
-        case .failure(let error):
-            print("attach failure " + error.localizedDescription)
-        }
+    .attach(url: url,
+            size: size, 
+            tsURL: { (path, url) -> URL? in
+                if path.hasSuffix(".ts") {
+                    return url.appendingPathComponent(path)
+                } else {
+                    return nil
+                }
+    },
+            completion: { (result) in
+                switch result {
+                case .success(let model):
+                    print("[Attach Success] " + model.name!)
+                case .failure(let error):
+                    print("[Attach Failure] " + error.  localizedDescription)
+                }
     })
 ```
 
@@ -65,7 +72,7 @@ WLM3U
         case .success(let url):
             url // The directory where the ts file is located
         case .failure(let error):
-            print("download failure " + error.localizedDescription)
+            print("[Download Failure] " + error.localizedDescription)
         }
     })
 ```
@@ -84,25 +91,14 @@ WLM3U
         case .success(let url):
             url // The directory where the files are located after the combine is completed
         case .failure(let error):
-            print("combine failure " + error.localizedDescription)
+            print("[Combine Failure] " + error.localizedDescription)
         }
     })
 ```
 
 ### Automatically get the total size of the ts file
 
-WLM3U supports automatic acquisition of the total size of all files, just set the `calculateSize` parameter:
-
-```Swift
-let url = URL(string:"http://xxx.com/yyy.m3u8")! // URL of the M3U file
-
-WLM3U
-    .attach(url: url, calculateSize: true)
-    .download()
-    .combine()
-```
-
-The process of getting the size is asynchronous, you can get the size data by receiving `TaskGetFileSizeProgressNotification` and `TaskGetFileSizeCompletionNotification`.
+WLM3U supports automatic acquisition of the total size of all files when calling the `WLM3U.attach()` function without passing the `size` parameter. The process of getting the size is asynchronous, you can get the size data by receiving `TaskGetFileSizeProgressNotification` and `TaskGetFileSizeCompletionNotification`.
 
 ### Pause and Resume tasks
 
@@ -143,6 +139,8 @@ AVPlayer and WLM3U do not support playing local ts files at this time. Here are 
 
 ### Using GCDWebServer to build local services
 
+**Note: Do not call the `WLM3U.combine()` function when playing in this way.**
+
 Using the [GCDWebServer](https://github.com/swisspol/GCDWebServer) library:
 
 ```ruby
@@ -162,7 +160,7 @@ server.addGETHandler(forBasePath: "/",
 server.start()
 ```
 
-Use AVPlayer to play the ts file provided by the local service:
+Then, use AVPlayer to play the ts file provided by the local service:
 
 ```Swift
 let url = URL(string: "http://localhost:\(server.port)/file.m3u8")
@@ -225,15 +223,22 @@ let url = URL(string:"http://xxx.com/yyy.m3u8")! // M3U 文件的 URL
 let size: Int = <#fileSize#>                     // 所有 ts 文件的总大小
 
 WLM3U
-    .attach(url: url, size: size, completion: { (result) in
-        switch result {
-        case .success(let model):
-            model.name  // yyy
-            model.tsArr // ts 文件数组
-            ...
-        case .failure(let error):
-            print("attach failure " + error.localizedDescription)
-        }
+    .attach(url: url,
+            size: size, 
+            tsURL: { (path, url) -> URL? in
+                if path.hasSuffix(".ts") {
+                    return url.appendingPathComponent(path)
+                } else {
+                    return nil
+                }
+    },
+            completion: { (result) in
+                switch result {
+                case .success(let model):
+                    print("[Attach Success] " + model.name!)
+                case .failure(let error):
+                    print("[Attach Failure] " + error.  localizedDescription)
+                }
     })
 ```
 
@@ -254,7 +259,7 @@ WLM3U
         case .success(let url):
             url // ts 文件所在的目录
         case .failure(let error):
-            print("download failure " + error.localizedDescription)
+            print("[Download Failure] " + error.localizedDescription)
         }
     })
 ```
@@ -273,25 +278,14 @@ WLM3U
         case .success(let url):
             url // 合并完成后文件所在的目录
         case .failure(let error):
-            print("combine failure " + error.localizedDescription)
+            print("[Combine Failure] " + error.localizedDescription)
         }
     })
 ```
 
 ### 自动获取 ts 文件总大小
 
-WLM3U 支持自动获取所有文件的总大小，只需设置 `calculateSize` 参数即可：
-
-```Swift
-let url = URL(string:"http://xxx.com/yyy.m3u8")! // M3U 文件的 URL
-
-WLM3U
-    .attach(url: url, calculateSize: true)
-    .download()
-    .combine()
-```
-
-获取大小的过程是异步的，可以通过接收 `TaskGetFileSizeProgressNotification` 和 `TaskGetFileSizeCompletionNotification` 来获取大小数据。
+当调用 `WLM3U.attach()` 函数未传递 `size` 参数时，WLM3U 会自动获取所有文件的总大小。这个过程是异步的，可以通过接收 `TaskGetFileSizeProgressNotification` 和 `TaskGetFileSizeCompletionNotification` 来获取大小数据。
 
 ### 暂停与恢复任务
 
@@ -331,6 +325,8 @@ public let TaskErrorNotification: Notification.Name
 AVPlayer 与 WLM3U 暂不支持播放本地 ts 文件，这里提供两个简单可行的替代方案。
 
 ### 使用 GCDWebServer 搭建本地服务
+
+**注意：使用此方式播放时，不要调用 `WLM3U.combine()` 函数。**
 
 引入 [GCDWebServer](https://github.com/swisspol/GCDWebServer) 库：
 

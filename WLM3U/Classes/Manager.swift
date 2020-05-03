@@ -71,19 +71,31 @@ extension WLError: LocalizedError {
 }
 
 /// A notification that will be sent when the progress of the task changes.
-public let TaskProgressNotification: Notification.Name = Notification.Name(rawValue: "WLTaskProgressNotification")
+public let TaskProgressNotification: Notification.Name =
+    Notification.Name(rawValue: "WLTaskProgressNotification")
 
 /// A notification that will be sent when the progress of getting file size changes.
-public let TaskGetFileSizeProgressNotification: Notification.Name = Notification.Name(rawValue: "WLTaskGetFileSizeProgressNotification")
+public let TaskGetFileSizeProgressNotification: Notification.Name =
+    Notification.Name(rawValue: "WLTaskGetFileSizeProgressNotification")
 
 /// A notification that will be sent when size of all files has got.
-public let TaskGetFileSizeCompletionNotification: Notification.Name = Notification.Name(rawValue: "WLTaskGetFileSizeCompletionNotification")
+public let TaskGetFileSizeCompletionNotification: Notification.Name =
+    Notification.Name(rawValue: "WLTaskGetFileSizeCompletionNotification")
 
 /// A notification that will be sent when the task ends.
-public let TaskCompletionNotification: Notification.Name = Notification.Name(rawValue: "WLTaskCompletionNotification")
+public let TaskCompletionNotification: Notification.Name =
+    Notification.Name(rawValue: "WLTaskCompletionNotification")
 
 /// A notification that will be sent when a task has an error.
-public let TaskErrorNotification: Notification.Name = Notification.Name(rawValue: "WLTaskErrorNotification")
+public let TaskErrorNotification: Notification.Name =
+    Notification.Name(rawValue: "WLTaskErrorNotification")
+
+/// A closure that will be called when determine the URL of the slice file from a given String and URL.
+/// This will be called multiple times.
+/// String: A ts file path from the m3u file content.
+/// URL: The relative URL.
+/// URL?: URL of the slice file. Retuen `nil` if it is not a ts file.
+public typealias TsURLHandler = (String, URL) -> URL?
 
 /// A closure executed once a attach task has completed.
 /// Result<Model>: A Result instance of the attach task. The `Model` value is an object parsed from m3u file.
@@ -123,14 +135,17 @@ open class Manager {
     /// Creates a `Workflow` to retrieve the contents of the specified `url`, `size`, `calculateSize` and `completion`.
     ///
     /// - Parameters:
-    ///   - url:           A URL of m3u file.
-    ///   - size:          The total size of the downloaded file, the default is `0`.
-    ///   - calculateSize: Whether try to parse the total size of the file from the m3u file, the default is `false`.
-    ///   - completion:    The attach task completion callback.
+    ///   - url:        A URL of m3u file.
+    ///   - size:       The total size of the downloaded file, the default is `0`.
+    ///   - tsURL:      A closure that will be called when determine the URL of the slice file from a given String and URL.
+    ///   - completion: The attach task completion callback.
     /// - Returns: A `Workflow` instance.
+    /// - Throws: A `WLError` instance.
     @discardableResult
-    public func attach(url: URL, size: Int = 0, calculateSize: Bool = false, completion: AttachCompletion? = nil)
-        throws -> Workflow {
+    public func attach(url: URL,
+                       size: Int = 0,
+                       tsURL: TsURLHandler? = nil,
+                       completion: AttachCompletion? = nil) throws -> Workflow {
             
             if url.isFileURL || !workSpace.isFileURL {
                 NotificationCenter.default.post(name: TaskErrorNotification,
@@ -149,7 +164,7 @@ open class Manager {
             let workflow = Workflow(url: url, workSpace: workSpace, size: size)
             workflow.delegate = self
             workflows.append(workflow)
-            workflow.attach(completion: completion)
+            workflow.attach(tsURL: tsURL, completion: completion)
             return workflow
     }
     

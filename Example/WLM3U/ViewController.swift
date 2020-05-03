@@ -35,12 +35,19 @@ class ViewController: UIViewController {
         let url = URL(string: sender.tag == 0 ? textView1.text : textView2.text)!
         do {
             let workflow = try WLM3U.attach(url: url,
+                                            tsURL: { (path, url) -> URL? in
+                                                if path.hasSuffix(".ts") {
+                                                    return url.appendingPathComponent(path)
+                                                } else {
+                                                    return nil
+                                                }
+            },
                                             completion: { (result) in
                                                 switch result {
                                                 case .success(let model):
-                                                    print("attach success " + model.name!)
+                                                    print("[Attach Success] " + model.name!)
                                                 case .failure(let error):
-                                                    print("attach failure " + error.localizedDescription)
+                                                    print("[Attach Failure] " + error.localizedDescription)
                                                 }
             })
             
@@ -62,9 +69,9 @@ class ViewController: UIViewController {
                                             completion: { (result) in
                                                 switch result {
                                                 case .success(let model):
-                                                    print("attach success " + model.name!)
+                                                    print("[Attach Success] " + model.name!)
                                                 case .failure(let error):
-                                                    print("attach failure " + error.localizedDescription)
+                                                    print("[Attach Failure] " + error.localizedDescription)
                                                 }
             })
             
@@ -97,18 +104,18 @@ class ViewController: UIViewController {
             }, completion: { (result) in
                 switch result {
                 case .success(let url):
-                    print("download success " + url.path)
+                    print("[Download Success] " + url.path)
                 case .failure(let error):
-                    print("download failure " + error.localizedDescription)
+                    print("[Download Failure] " + error.localizedDescription)
                 }
             })
             
             .combine(completion: { (result) in
                 switch result {
                 case .success(let url):
-                    print("combine success " + url.path)
+                    print("[Combine Success] " + url.path)
                 case .failure(let error):
-                    print("combine failure " + error.localizedDescription)
+                    print("[Combine Failure] " + error.localizedDescription)
                 }
                 
                 speedLabel.text = "All finished"
