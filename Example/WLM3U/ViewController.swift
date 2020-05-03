@@ -24,8 +24,8 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        let url1 = "http://qf-oss.bofuns.com/mts_in/hls/01573a671542b017000c533e25f33abb/01573a671542b017000c533e25f33abb.m3u8"
-        let url2 = "http://qf-oss.bofuns.com/mts_in/hls/9ba8c4ab624563ae418cb3f63c5dbfe1/9ba8c4ab624563ae418cb3f63c5dbfe1.m3u8"
+        let url1 = "http://47.108.143.147/fs/v1/6570255ceb09709311cb152cdc565e12.m3u8"
+        let url2 = "http://47.108.143.147/fs/v1/6570255ceb09709311cb152cdc565e12.m3u8"
         
         textView1.text = url1
         textView2.text = url2
