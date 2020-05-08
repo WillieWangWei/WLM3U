@@ -6,7 +6,7 @@ Pod::Spec.new do |s|
   s.license               = { :type => 'MIT', :file => 'LICENSE' }
   s.author                = { 'Willie' => 'willie.wangwei@gmail.com' }
   s.source                = { :git => 'https://github.com/WillieWangWei/WLM3U.git', :tag => s.version.to_s }
-  s.source_files          = "Source/*.swift"
+  s.source_files          = "Source/WLM3U/*.swift"
   s.swift_version         = '5.0'
   s.ios.deployment_target = '9.0'
   s.dependency 'Alamofire'
