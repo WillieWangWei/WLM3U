@@ -17,7 +17,7 @@ let package = Package(
     targets: [
         .target(
             name: "WLM3U",
-            path: "Sources",
+            path: "Sources"
         ),
 
     ],
