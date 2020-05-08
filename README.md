@@ -15,7 +15,7 @@ To run the example project, clone the repo, and run `pod install` from the Examp
 
 iOS   | Swift
 ----- | -----
-9.0 + | 5.0 +
+10.0 + | 5.1 +
 
 ## Installation
 
