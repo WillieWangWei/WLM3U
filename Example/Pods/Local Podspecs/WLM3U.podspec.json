@@ -14,7 +14,7 @@
     "git": "https://github.com/WillieWangWei/WLM3U.git",
     "tag": "0.1.5"
   },
-  "source_files": "Source/*.swift",
+  "source_files": "Sources/*.swift",
   "swift_versions": "5.1",
   "platforms": {
     "ios": "10.0"

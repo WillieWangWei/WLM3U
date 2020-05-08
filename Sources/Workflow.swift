@@ -157,26 +157,19 @@ extension Workflow {
         }
         
         // Download m3u file ...
-        Alamofire.download(URLRequest(url: url),
-                           to: { (_, _) -> (destinationURL: URL, options: DownloadRequest.DownloadOptions) in
-                            return (self.workflowDir!.appendingPathComponent("file.m3u8"), [.removePreviousFile])
-        })
-            .responseData { (response) in
-                
-                if let error = response.error {
-                    self.handleCompletion(of: "attach",
-                                          completion: completion,
-                                          result: .failure(.downloadFailed(error)))
-                    return
-                }
-                
-                guard let destinationURL = response.destinationURL else {
-                    self.operationQueue.cancelAllOperations()
-                    self.handleCompletion(of: "attach", completion: completion, result: .failure(.downloadFailed(nil)))
-                    return
-                }
-                
-                self.m3uDownloadDidFinished(at: destinationURL, completion: completion)
+        let destinationURL = self.workflowDir!.appendingPathComponent("file.m3u8")
+        Session.default.download(URLRequest(url: url)) { (_, _) -> (destinationURL: URL, options: DownloadRequest.Options) in
+            return (destinationURL, [.removePreviousFile])
+        }
+        .responseData { (response) in
+            if let error = response.error {
+                self.handleCompletion(of: "attach",
+                                      completion: completion,
+                                      result: .failure(.downloadFailed(error)))
+                return
+            }
+            
+            self.m3uDownloadDidFinished(at: destinationURL, completion: completion)
         }
         
         return self
@@ -337,12 +330,13 @@ extension Workflow {
         }
         
         let req = URLRequest(url: fullURL)
-        let destination: DownloadRequest.DownloadFileDestination =
-        {(_, _) -> (destinationURL: URL, options: DownloadRequest.DownloadOptions) in
+        let destination: DownloadRequest.Destination =
+        {(_, _) -> (destinationURL: URL, options: DownloadRequest.Options) in
             return (fileLocalURL, [.removePreviousFile])
         }
         
-        let request = Alamofire
+        let request = Session
+            .default
             .download(req, to: destination)
             .downloadProgress { (progress) in
                 self.progressDic[fullURL] = progress

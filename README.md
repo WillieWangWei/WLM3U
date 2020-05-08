@@ -13,24 +13,18 @@ To run the example project, clone the repo, and run `pod install` from the Examp
 
 ## Requirements
 
+
 iOS   | Swift
 ----- | -----
-10.0 + | 5.1 +
+9.0 + | 5.0 +
 
 ## Installation
 
-### CocoaPods
+WLM3U is available through [CocoaPods](https://cocoapods.org). To install
+it, simply add the following line to your Podfile:
 
 ```ruby
 pod 'WLM3U'
-```
-
-### Swift Package Manager
-
-```swift
-dependencies: [
-    .package(url: "https://github.com/WillieWangWei/WLM3U.git", .upToNextMajor(from: "0.1.5"))
-]
 ```
 
 ## Usage
