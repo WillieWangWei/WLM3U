@@ -6,20 +6,7 @@ import PackageDescription
 let package = Package(
     name: "WLM3U",
     platforms: [.iOS(.v9),],
-    products: [
-        .library(
-            name: "WLM3U",
-            targets: ["WLM3U"]),
-    ],
-    dependencies: [
-        .package(url: "https://github.com/Alamofire/Alamofire.git", .upToNextMajor(from: "5.1.0"))
-    ],
-    targets: [
-        .target(
-            name: "WLM3U",
-            path: "Sources"
-        ),
-
-    ],
-    swiftLanguageVersions: [.v5]
+    products: [.library(name: "WLM3U", targets: ["WLM3U"])],
+    dependencies: [.package(url: "https://github.com/Alamofire/Alamofire.git", .upToNextMajor(from: "5.1.0"))],
+    targets: [.target(name: "WLM3U", path: "Sources")]
 )
