@@ -16,7 +16,10 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "WLM3U"),
+            name: "WLM3U",
+            path: "Sources",
+        ),
+
     ],
     swiftLanguageVersions: [.v5]
 )
