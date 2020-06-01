@@ -196,7 +196,7 @@ extension Workflow {
                                              attributes: nil)
             handleCompletion(of: "attach", completion: completion, result: .success(model))
         } catch {
-            handleCompletion(of: "attach", completion: completion, result: .failure(.handleCacheFailed(error)))
+            handleCompletion(of: "attach", completion: completion, result: .failure(error as! WLError))
             return
         }
     }
@@ -456,8 +456,10 @@ extension Workflow {
             let fileHandle = FileHandle(forUpdatingAtPath: combineFilePath.path)
             defer { fileHandle?.closeFile() }
             for tsFilePath in tsFilePaths {
-                let data = try! Data(contentsOf: URL(fileURLWithPath: tsFilePath))
-                fileHandle?.write(data)
+                if self.fileManager?.fileExists(atPath: tsFilePath) ?? false {
+                    let data = try! Data(contentsOf: URL(fileURLWithPath: tsFilePath))
+                    fileHandle?.write(data)
+                }
             }
             
             do {
